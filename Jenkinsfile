@@ -1,50 +1,46 @@
 
 pipeline{
-    tools{
-        jdk 'myjava'
-        maven 'mymaven'
+
+   agent any
+	environment {
+		DOCKERHUB_CREDENTIALS=credentials('dockerhub')
+	}
+	
+	stages {
+
+		stage('gitclone') {
+
+		      steps {
+		         git 'https://github.com/theitern/PublishImageToDockerhub.git'
+		      }
+		}
+		
+		stage('Build') {
+			steps {
+			
+			   sh 'docker build -t akinaregbesola/class_app:latest .'
+			}
+		}
+		
+		stage('Login') {
+		
+			steps {
+			   sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --passwd-stdin'
+			}
+		}
+
+		stage('Push') {
+			
+			steps {
+			   sh 'docker push akinaregbesola/class_app:latest'
+			}
+		}
+		}
+	
+	post {
+	    always {
+		sh 'docker logout'
+	    }
     }
-	agent any
-      stages{
-           stage('Checkout'){
-	    
-               steps{
-		 echo 'cloning..'
-                 git 'https://github.com/Sonal0409/DevOpsClassCodes.git'
-              }
-          }
-          stage('Compile'){
-             
-              steps{
-                  echo 'complie the code..'
-                  sh 'mvn compile'
-	      }
-          }
-          stage('CodeReview'){
-		  
-              steps{
-		    
-		  echo 'codeReview'
-                  sh 'mvn pmd:pmd'
-              }
-          }
-           stage('UnitTest'){
-		  
-              steps{
-	         
-                  sh 'mvn test'
-              }
-          
-          }
-        
-          stage('Package'){
-		  
-              steps{
-		  
-                  sh 'mvn package'
-              }
-          }
-	     
-          
-      }
+
 }
